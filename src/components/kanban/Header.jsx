@@ -1,9 +1,9 @@
 import React from 'react';
-import { LogOut, LayoutGrid, Calendar, RefreshCw } from 'lucide-react';
+import { LogOut, LayoutGrid, Calendar, RefreshCw, Search } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { firestoreService } from '../../services/firestoreService';
 
-export const Header = ({ user, currentView, setCurrentView }) => {
+export const Header = ({ user, currentView, setCurrentView, searchTerm, setSearchTerm }) => {
 
   const viewButtonClasses = (viewName) => 
     `p-2 rounded-md flex items-center space-x-2 text-sm transition-colors ${
@@ -37,6 +37,17 @@ export const Header = ({ user, currentView, setCurrentView }) => {
                   <Calendar size={16} />
                   <span>Calendar</span>
               </button>
+          </div>
+          {/* Search Bar */}
+          <div className="relative">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input 
+              type="text"
+              placeholder="Search tasks..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-gray-700 border border-gray-600 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
           </div>
       </div>
       <div className="flex items-center space-x-4">

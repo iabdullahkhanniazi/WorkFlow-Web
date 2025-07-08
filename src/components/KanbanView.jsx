@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { firestoreService } from '../services/firestoreService';
 import { Header } from './kanban/Header';
 import { Board } from './kanban/Board';
@@ -9,10 +9,10 @@ export const KanbanView = ({ user }) => {
   const [tasks, setTasks] = useState({});
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState('board');
+  const [searchTerm, setSearchTerm] = useState('');
   const hasInitialized = useRef(false);
 
   useEffect(() => {
-    // This check ensures the initialization runs only once per session.
     if (!hasInitialized.current) {
       firestoreService.initializeBoard(user.uid);
       hasInitialized.current = true;
@@ -36,6 +36,21 @@ export const KanbanView = ({ user }) => {
     };
   }, [user.uid]);
 
+  // Memoize the filtered tasks to avoid re-calculating on every render
+  const filteredTasks = useMemo(() => {
+    if (!searchTerm) {
+      return tasks;
+    }
+    const lowercasedFilter = searchTerm.toLowerCase();
+    const filtered = {};
+    for (const columnId in tasks) {
+      filtered[columnId] = tasks[columnId].filter(task =>
+        task.title.toLowerCase().includes(lowercasedFilter)
+      );
+    }
+    return filtered;
+  }, [tasks, searchTerm]);
+
   if (loading) {
     return (
       <div className="bg-gray-900 text-white h-screen flex items-center justify-center">
@@ -53,12 +68,14 @@ export const KanbanView = ({ user }) => {
         user={user} 
         currentView={currentView}
         setCurrentView={setCurrentView}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
       />
       {currentView === 'board' ? (
         <Board 
             columns={columns} 
             setColumns={setColumns}
-            tasks={tasks} 
+            tasks={filteredTasks} // Use the filtered tasks for the board
             userId={user.uid} 
             doneColumnId={doneColumn?.id} 
         />
