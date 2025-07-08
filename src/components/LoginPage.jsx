@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { authService } from '../services/authService';
+import { firestoreService } from '../services/firestoreService';
 
 export const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState(''); // New state for username
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
@@ -14,7 +16,10 @@ export const LoginPage = () => {
       if (isLogin) {
         await authService.login(email, password);
       } else {
-        await authService.register(email, password);
+        const { user } = await authService.register(email, password);
+        // After registering, update their profile and create their user document
+        await authService.updateUserProfile(user, { displayName });
+        await firestoreService.createUserProfileDocument(user, { displayName });
       }
     } catch (err) {
       setError(err.message);
@@ -26,6 +31,16 @@ export const LoginPage = () => {
       <div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-lg shadow-lg">
         <h2 className="text-3xl font-bold text-center">{isLogin ? 'Login' : 'Sign Up'}</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {!isLogin && (
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="Display Name"
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              required
+            />
+          )}
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required />
           {error && <p className="text-red-500 text-sm">{error}</p>}

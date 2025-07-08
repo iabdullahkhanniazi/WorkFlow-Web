@@ -1,4 +1,5 @@
 import { db } from '../firebase';
+// FIX: Added 'orderBy' to the list of imports from firestore
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, query, getDocs, doc, serverTimestamp, writeBatch, increment, orderBy } from 'firebase/firestore';
 
 const getBasePath = (userId) => `users/${userId}`;
@@ -107,7 +108,6 @@ export const firestoreService = {
     return updateDoc(taskRef, { isTracking: false, lastStarted: null, timeTracked: increment(elapsedSeconds) });
   },
 
-  // --- NEW: Comment Management ---
   addComment: (userId, taskId, commentData) => {
     const commentsRef = collection(db, getBasePath(userId), 'tasks', taskId, 'comments');
     return addDoc(commentsRef, {

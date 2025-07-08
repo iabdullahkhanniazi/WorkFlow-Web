@@ -6,21 +6,8 @@ import { auth } from '../../firebase';
 import { Modal } from '../shared/Modal';
 import { Clock, Calendar, Plus, Trash2, AlignLeft, CheckSquare, Play, Pause, Check, MessageSquare, Send, Tag, Pencil, Image as ImageIcon } from 'lucide-react';
 
-// Helper function to format seconds into HH:MM:SS
-const formatTime = (totalSeconds) => {
-  if (isNaN(totalSeconds) || totalSeconds < 0) {
-    totalSeconds = 0;
-  }
-  // FIX: Ensure we are working with whole numbers for calculations
-  const flooredSeconds = Math.floor(totalSeconds);
-  const hours = Math.floor(flooredSeconds / 3600);
-  const minutes = Math.floor((flooredSeconds % 3600) / 60);
-  const seconds = flooredSeconds % 60;
-  return [hours, minutes, seconds]
-    .map(v => v < 10 ? "0" + v : v)
-    .join(":");
-};
-
+// Helper functions formatTime and getRemainingTimeInfo
+const formatTime = (s) => { if(!s) s=0; const h=Math.floor(s/3600); s%=3600; return [h,Math.floor(s/60),s%60].map(v=>v<10?'0'+v:v).join(':'); };
 const getRemainingTimeInfo = (d) => { if(!d) return null; const n=new Date(),due=d.toDate?d.toDate():new Date(d),t=due-n; if(t<0)return{text:'Overdue',isPast:true};const h=t/36e5;if(h<24)return{text:`${Math.floor(h)}h ${Math.floor(h%1*60)}m left`,isPast:false};const days=Math.ceil(h/24);return{text:`${days} days left`,isPast:false}};
 
 export const TaskModal = ({ isOpen, onClose, task, columnId, userId, doneColumnId }) => {
@@ -178,155 +165,68 @@ export const TaskModal = ({ isOpen, onClose, task, columnId, userId, doneColumnI
   
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <form onSubmit={handleSubmit}>
-        {coverImage && (
-          <div className="relative mb-6 -mx-6 -mt-6 group">
-            <img src={coverImage} alt="Cover" className="w-full h-48 object-cover rounded-t-lg" />
-            <button 
-              type="button" 
-              onClick={() => setIsEditingCover(!isEditingCover)}
-              className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <Pencil size={16} />
-            </button>
-          </div>
-        )}
+      <form onSubmit={handleSubmit} className="flex flex-col h-full">
+        {/* --- Top Section (Sticky) --- */}
+        <div className="flex-shrink-0 p-6">
+            {coverImage && (
+              <div className="relative mb-6 -mx-6 -mt-6 group">
+                <img src={coverImage} alt="Cover" className="w-full h-48 object-cover rounded-t-lg" />
+                <button type="button" onClick={() => setIsEditingCover(!isEditingCover)} className="absolute top-2 right-2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Pencil size={16} />
+                </button>
+              </div>
+            )}
+            <div className="flex items-center space-x-3 mb-4">
+                <span className={`w-6 h-6 rounded-full flex-shrink-0 ${priorityCircleColors[priority]}`}></span>
+                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-transparent text-3xl font-bold text-white border-none focus:ring-0 p-0" placeholder="Task Title" required />
+            </div>
+            <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-gray-400">
+                {isEditingPriority ? ( <select value={priority} onChange={(e) => setPriority(e.target.value)} onBlur={() => setIsEditingPriority(false)} autoFocus className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"><option>Low</option><option>Medium</option><option>High</option></select> ) : ( <button type="button" onClick={() => setIsEditingPriority(true)} className="flex items-center space-x-2 p-1 rounded-md hover:bg-gray-700"><Tag size={16}/><span>{priority} Priority</span></button> )}
+                {isEditingDate ? ( <input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} onBlur={() => setIsEditingDate(false)} autoFocus className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"/> ) : ( <button type="button" onClick={() => setIsEditingDate(true)} className={`flex items-center space-x-2 p-1 rounded-md hover:bg-gray-700 ${remainingTimeInfo?.isPast ? 'text-red-400' : ''}`}><Calendar size={16}/><span>{remainingTimeInfo ? remainingTimeInfo.text : 'Set Due Date'}</span></button> )}
+                {task && task.id && ( <div className="flex items-center space-x-2"><Clock size={16} /><span className="font-mono">{formatTime(displayTime)}</span></div> )}
+                {task && task.id && ( <button type="button" onClick={handleTimerToggle} className="flex items-center space-x-2 p-1 hover:bg-gray-700 rounded-full">{isTracking ? <Pause size={16} className="text-yellow-400" /> : <Play size={16} />}<span>{isTracking ? 'Pause' : 'Start'} Timer</span></button> )}
+            </div>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* --- Scrollable Content Area --- */}
+        <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-8 px-6 overflow-y-auto custom-scrollbar">
             <div className="md:col-span-2">
-                <div className="flex items-center space-x-3 mb-4">
-                    <span className={`w-6 h-6 rounded-full flex-shrink-0 ${priorityCircleColors[priority]}`}></span>
-                    <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full bg-transparent text-3xl font-bold text-white border-none focus:ring-0 p-0" placeholder="Task Title" required />
-                </div>
-                
-                <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mb-6 text-sm text-gray-400">
-                    {isEditingPriority ? (
-                        <select
-                            value={priority}
-                            onChange={(e) => setPriority(e.target.value)}
-                            onBlur={() => setIsEditingPriority(false)}
-                            autoFocus
-                            className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        >
-                            <option>Low</option>
-                            <option>Medium</option>
-                            <option>High</option>
-                        </select>
-                    ) : (
-                        <button type="button" onClick={() => setIsEditingPriority(true)} className="flex items-center space-x-2 p-1 rounded-md hover:bg-gray-700">
-                            <Tag size={16}/>
-                            <span>{priority} Priority</span>
-                        </button>
-                    )}
-                    {isEditingDate ? (
-                        <input 
-                            type="datetime-local" 
-                            value={dueDate} 
-                            onChange={(e) => setDueDate(e.target.value)} 
-                            onBlur={() => setIsEditingDate(false)}
-                            autoFocus
-                            className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
-                    ) : (
-                        <button type="button" onClick={() => setIsEditingDate(true)} className={`flex items-center space-x-2 p-1 rounded-md hover:bg-gray-700 ${remainingTimeInfo?.isPast ? 'text-red-400' : ''}`}>
-                            <Calendar size={16}/>
-                            <span>{remainingTimeInfo ? remainingTimeInfo.text : 'Set Due Date'}</span>
-                        </button>
-                    )}
-                    {task && task.id && (
-                      <div className="flex items-center space-x-2">
-                          <Clock size={16} />
-                          <span className="font-mono">{formatTime(displayTime)}</span>
-                      </div>
-                    )}
-                     {task && task.id && (
-                        <button type="button" onClick={handleTimerToggle} className="flex items-center space-x-2 p-1 hover:bg-gray-700 rounded-full">
-                            {isTracking ? <Pause size={16} className="text-yellow-400" /> : <Play size={16} />}
-                            <span>{isTracking ? 'Pause' : 'Start'} Timer</span>
-                        </button>
-                    )}
-                </div>
-                
                 {isEditingCover && (
                     <div className="mb-6">
                         <label className="flex items-center space-x-2 text-sm font-medium text-gray-400 mb-2"><ImageIcon size={16}/><span>Cover Image URL</span></label>
                         <input type="url" value={coverImage} onChange={(e) => setCoverImage(e.target.value)} className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
                     </div>
                 )}
-
                 <div className="mb-6">
                     <label className="flex items-center space-x-2 text-sm font-medium text-gray-400 mb-2"><AlignLeft size={16} /><span>Description</span></label>
                     <ReactQuill theme="snow" value={description} onChange={setDescription} className="bg-gray-700 rounded-lg"/>
                 </div>
-
                 <div className="mb-6">
                     <label className="flex items-center space-x-2 text-sm font-medium text-gray-400 mb-2"><CheckSquare size={16} /><span>Checklist</span></label>
-                    {checklist.length > 0 && (
-                        <div className="w-full bg-gray-900 rounded-full h-2 mb-3">
-                            <div className="bg-indigo-500 h-2 rounded-full" style={{ width: `${(completedItems / checklist.length) * 100}%` }}></div>
-                        </div>
-                    )}
+                    {checklist.length > 0 && ( <div className="w-full bg-gray-900 rounded-full h-2 mb-3"><div className="bg-indigo-500 h-2 rounded-full" style={{ width: `${(completedItems / checklist.length) * 100}%` }}></div></div> )}
                     <div className="space-y-2">
-                        {checklist.map(item => (
-                            <div key={item.id} className="flex items-center justify-between bg-gray-700 p-2 rounded-md hover:bg-gray-600">
-                                <div className="flex items-center">
-                                    <input type="checkbox" checked={item.completed} onChange={() => toggleChecklistItem(item.id)} className="w-4 h-4 text-indigo-600 bg-gray-900 border-gray-600 rounded focus:ring-indigo-500" />
-                                    <span className={`ml-3 text-sm ${item.completed ? 'line-through text-gray-500' : 'text-gray-300'}`}>{item.text}</span>
-                                </div>
-                                <button type="button" onClick={() => deleteChecklistItem(item.id)} className="text-gray-500 hover:text-red-500">
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        ))}
+                        {checklist.map(item => ( <div key={item.id} className="flex items-center justify-between bg-gray-700 p-2 rounded-md hover:bg-gray-600"><div className="flex items-center"><input type="checkbox" checked={item.completed} onChange={() => toggleChecklistItem(item.id)} className="w-4 h-4 text-indigo-600 bg-gray-900 border-gray-600 rounded focus:ring-indigo-500" /><span className={`ml-3 text-sm ${item.completed ? 'line-through text-gray-500' : 'text-gray-300'}`}>{item.text}</span></div><button type="button" onClick={() => deleteChecklistItem(item.id)} className="text-gray-500 hover:text-red-500"><Trash2 size={16} /></button></div> ))}
                     </div>
                     <div className="flex items-center mt-3">
                         <input type="text" value={newChecklistItem} onChange={(e) => setNewChecklistItem(e.target.value)} placeholder="Add an item" className="w-full bg-gray-700 border-gray-600 rounded-l-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-                        <button type="button" onClick={addChecklistItem} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-2 rounded-r-md">
-                            <Plus size={20} />
-                        </button>
+                        <button type="button" onClick={addChecklistItem} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold p-2 rounded-r-md"><Plus size={20} /></button>
                     </div>
                 </div>
             </div>
 
             <div className="md:col-span-1 space-y-4">
-                {task && task.id && isChecklistComplete && task.columnId !== doneColumnId && (
-                    <button type="button" onClick={handleMarkComplete} className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">
-                        <CheckSquare size={16} />
-                        <span>Mark as Complete</span>
-                    </button>
-                )}
-                {!coverImage && (
-                    <button type="button" onClick={() => setIsEditingCover(true)} className="w-full flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">
-                        <ImageIcon size={16} />
-                        <span>Add Cover</span>
-                    </button>
-                )}
-                
+                {task && task.id && isChecklistComplete && task.columnId !== doneColumnId && ( <button type="button" onClick={handleMarkComplete} className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"><CheckSquare size={16} /><span>Mark as Complete</span></button> )}
+                {!coverImage && ( <button type="button" onClick={() => setIsEditingCover(true)} className="w-full flex items-center justify-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg"><ImageIcon size={16} /><span>Add Cover</span></button> )}
                 {task && task.id && (
                     <div>
                         <label className="flex items-center space-x-2 text-sm font-medium text-gray-400 mb-2"><MessageSquare size={16}/><span>Activity</span></label>
                         <div className="space-y-4">
                             <div className="flex items-center space-x-2">
-                                <input 
-                                    type="text" 
-                                    value={newComment} 
-                                    onChange={(e) => setNewComment(e.target.value)} 
-                                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(e); }}
-                                    placeholder="Write a comment..." 
-                                    className="w-full bg-gray-700 border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                />
-                                <button type="button" onClick={handleAddComment} className="p-2 bg-indigo-600 rounded-lg hover:bg-indigo-700">
-                                    <Send size={16}/>
-                                </button>
+                                <input type="text" value={newComment} onChange={(e) => setNewComment(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(e); }} placeholder="Write a comment..." className="w-full bg-gray-700 border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+                                <button type="button" onClick={handleAddComment} className="p-2 bg-indigo-600 rounded-lg hover:bg-indigo-700"><Send size={16}/></button>
                             </div>
                             <div className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar-thin">
-                                {comments.map(comment => (
-                                    <div key={comment.id} className="text-sm">
-                                        <p className="font-semibold text-gray-300">{comment.authorEmail}</p>
-                                        <p className="text-gray-400">{comment.text}</p>
-                                        <p className="text-xs text-gray-500 mt-1">{comment.createdAt?.toDate().toLocaleString()}</p>
-                                    </div>
-                                ))}
+                                {comments.map(comment => ( <div key={comment.id} className="text-sm"><p className="font-semibold text-gray-300">{comment.authorEmail}</p><p className="text-gray-400">{comment.text}</p><p className="text-xs text-gray-500 mt-1">{comment.createdAt?.toDate().toLocaleString()}</p></div> ))}
                             </div>
                         </div>
                     </div>
@@ -334,7 +234,7 @@ export const TaskModal = ({ isOpen, onClose, task, columnId, userId, doneColumnI
             </div>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 mt-6 border-t border-gray-700">
+        <div className="flex-shrink-0 flex justify-end space-x-3 pt-4 mt-auto px-6 pb-6 border-t border-gray-700">
           <button type="button" onClick={onClose} className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg">Cancel</button>
           <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">{task && task.id ? 'Save Changes' : 'Add Task'}</button>
         </div>
