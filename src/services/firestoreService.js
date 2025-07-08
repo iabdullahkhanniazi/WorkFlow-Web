@@ -4,6 +4,25 @@ import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, query, getDocs, d
 const getBasePath = (userId) => `users/${userId}`;
 
 export const firestoreService = {
+  resetData: async (userId) => {
+    const basePath = getBasePath(userId);
+    const columnsRef = collection(db, basePath, 'columns');
+    const tasksRef = collection(db, basePath, 'tasks');
+
+    const columnsSnapshot = await getDocs(columnsRef);
+    const tasksSnapshot = await getDocs(tasksRef);
+
+    const batch = writeBatch(db);
+
+    columnsSnapshot.forEach(doc => batch.delete(doc.ref));
+    tasksSnapshot.forEach(doc => batch.delete(doc.ref));
+
+    await batch.commit();
+
+    // After deleting, re-initialize the board with default columns
+    await firestoreService.initializeBoard(userId);
+  },
+
   initializeBoard: async (userId) => {
     const columnsRef = collection(db, getBasePath(userId), 'columns');
     const snapshot = await getDocs(columnsRef);
