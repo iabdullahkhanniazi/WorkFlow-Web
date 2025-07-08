@@ -1,33 +1,15 @@
 import { db } from '../firebase';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, query, getDocs, doc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, query, getDocs, doc, serverTimestamp, writeBatch, increment, orderBy } from 'firebase/firestore';
 
 const getBasePath = (userId) => `users/${userId}`;
 
 export const firestoreService = {
-  resetData: async (userId) => {
-    const basePath = getBasePath(userId);
-    const columnsRef = collection(db, basePath, 'columns');
-    const tasksRef = collection(db, basePath, 'tasks');
-
-    const columnsSnapshot = await getDocs(columnsRef);
-    const tasksSnapshot = await getDocs(tasksRef);
-
-    const batch = writeBatch(db);
-
-    columnsSnapshot.forEach(doc => batch.delete(doc.ref));
-    tasksSnapshot.forEach(doc => batch.delete(doc.ref));
-
-    await batch.commit();
-
-    // After deleting, re-initialize the board with default columns
-    await firestoreService.initializeBoard(userId);
-  },
+  // ... (all existing functions from initializeBoard to startTimer remain the same)
 
   initializeBoard: async (userId) => {
     const columnsRef = collection(db, getBasePath(userId), 'columns');
     const snapshot = await getDocs(columnsRef);
     if (snapshot.empty) {
-      console.log("Creating default columns for new user.");
       const batch = writeBatch(db);
       const defaultColumns = [
         { title: 'To Do', order: 0 },
@@ -43,10 +25,9 @@ export const firestoreService = {
   },
 
   onColumnsSnapshot: (userId, callback) => {
-    const columnsQuery = query(collection(db, getBasePath(userId), 'columns'));
+    const columnsQuery = query(collection(db, getBasePath(userId), 'columns'), orderBy('order'));
     return onSnapshot(columnsQuery, snapshot => {
       const fetchedColumns = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      fetchedColumns.sort((a, b) => a.order - b.order);
       callback(fetchedColumns);
     });
   },
@@ -124,5 +105,22 @@ export const firestoreService = {
   stopTimer: (userId, taskId, elapsedSeconds) => {
     const taskRef = doc(db, getBasePath(userId), 'tasks', taskId);
     return updateDoc(taskRef, { isTracking: false, lastStarted: null, timeTracked: increment(elapsedSeconds) });
+  },
+
+  // --- NEW: Comment Management ---
+  addComment: (userId, taskId, commentData) => {
+    const commentsRef = collection(db, getBasePath(userId), 'tasks', taskId, 'comments');
+    return addDoc(commentsRef, {
+      ...commentData,
+      createdAt: serverTimestamp()
+    });
+  },
+
+  onCommentsSnapshot: (userId, taskId, callback) => {
+    const commentsQuery = query(collection(db, getBasePath(userId), 'tasks', taskId, 'comments'), orderBy('createdAt', 'desc'));
+    return onSnapshot(commentsQuery, snapshot => {
+      const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      callback(comments);
+    });
   }
 };
