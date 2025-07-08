@@ -1,14 +1,16 @@
 import { db } from '../firebase';
-import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, query, getDocs, doc, serverTimestamp, writeBatch, increment } from 'firebase/firestore';
+// FIX: Added 'orderBy' to the list of imports from firestore
+import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, query, getDocs, doc, serverTimestamp, writeBatch, increment, orderBy } from 'firebase/firestore';
 
 const getBasePath = (userId) => `users/${userId}`;
 
 export const firestoreService = {
+  // ... (all existing functions from initializeBoard to startTimer remain the same)
+
   initializeBoard: async (userId) => {
     const columnsRef = collection(db, getBasePath(userId), 'columns');
     const snapshot = await getDocs(columnsRef);
     if (snapshot.empty) {
-      console.log("Creating default columns for new user.");
       const batch = writeBatch(db);
       const defaultColumns = [
         { title: 'To Do', order: 0 },
@@ -24,10 +26,9 @@ export const firestoreService = {
   },
 
   onColumnsSnapshot: (userId, callback) => {
-    const columnsQuery = query(collection(db, getBasePath(userId), 'columns'));
+    const columnsQuery = query(collection(db, getBasePath(userId), 'columns'), orderBy('order'));
     return onSnapshot(columnsQuery, snapshot => {
       const fetchedColumns = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      fetchedColumns.sort((a, b) => a.order - b.order);
       callback(fetchedColumns);
     });
   },
@@ -105,5 +106,21 @@ export const firestoreService = {
   stopTimer: (userId, taskId, elapsedSeconds) => {
     const taskRef = doc(db, getBasePath(userId), 'tasks', taskId);
     return updateDoc(taskRef, { isTracking: false, lastStarted: null, timeTracked: increment(elapsedSeconds) });
+  },
+
+  addComment: (userId, taskId, commentData) => {
+    const commentsRef = collection(db, getBasePath(userId), 'tasks', taskId, 'comments');
+    return addDoc(commentsRef, {
+      ...commentData,
+      createdAt: serverTimestamp()
+    });
+  },
+
+  onCommentsSnapshot: (userId, taskId, callback) => {
+    const commentsQuery = query(collection(db, getBasePath(userId), 'tasks', taskId, 'comments'), orderBy('createdAt', 'desc'));
+    return onSnapshot(commentsQuery, snapshot => {
+      const comments = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      callback(comments);
+    });
   }
 };

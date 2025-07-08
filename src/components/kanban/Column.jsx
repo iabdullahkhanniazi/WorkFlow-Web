@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 import { firestoreService } from '../../services/firestoreService';
 import { TaskCard } from './TaskCard';
@@ -10,6 +10,18 @@ export const Column = ({ column, tasks, userId, draggedTask, setDraggedTask, don
   const [editingTask, setEditingTask] = useState(null);
 
   const protectedColumns = ['To Do', 'In Progress', 'Done'];
+
+  // FIX: This new `useEffect` hook listens for changes in the main `tasks` list.
+  // If the modal is open and the task being edited has been updated (e.g., timer started),
+  // it updates the local `editingTask` state to ensure the modal shows the latest data.
+  useEffect(() => {
+    if (isTaskModalOpen && editingTask) {
+      const updatedTask = tasks.find(t => t.id === editingTask.id);
+      if (updatedTask) {
+        setEditingTask(updatedTask);
+      }
+    }
+  }, [tasks, isTaskModalOpen, editingTask]);
 
   const handleOpenTaskModal = (task = null) => {
     setEditingTask(task);

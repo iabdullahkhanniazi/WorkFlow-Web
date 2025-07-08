@@ -1,14 +1,20 @@
+
+
+
+
 import { initializeApp } from "firebase/app";
-// Import all the auth functions we need
+// Import all the auth functions we need, including updateProfile
 import { 
   getAuth, 
   onAuthStateChanged, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
-  signOut 
+  signOut,
+  updateProfile // Add this import
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
+// Your firebaseConfig object
 // Your firebaseConfig object
 const firebaseConfig = {
   apiKey: "AIzaSyBGFHAw9HtFGd5AU6LuMRDN3GkJIZDR7eY",
@@ -25,12 +31,13 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Export everything
+// Export everything, including the new updateProfile function
 export { 
   auth, 
   db, 
   onAuthStateChanged, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
-  signOut 
+  signOut,
+  updateProfile // Add this export
 };
