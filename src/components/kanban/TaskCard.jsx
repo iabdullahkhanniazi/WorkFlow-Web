@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Pencil, Trash2, Calendar, Play, Pause, CheckSquare, Check } from 'lucide-react';
 import { firestoreService } from '../../services/firestoreService';
 
-// Helper function to format seconds into HH:MM:SS
+// FIX: Added the missing helper functions to this file.
 const formatTime = (totalSeconds) => {
+  if (isNaN(totalSeconds) || totalSeconds < 0) totalSeconds = 0;
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = Math.floor(totalSeconds % 60);
@@ -12,7 +13,6 @@ const formatTime = (totalSeconds) => {
     .join(":");
 };
 
-// Helper function to calculate remaining time
 const getRemainingTimeInfo = (dueDate) => {
     if (!dueDate || !dueDate.toDate) return null;
     const now = new Date();
@@ -28,6 +28,7 @@ const getRemainingTimeInfo = (dueDate) => {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return { text: `${diffDays} days left`, isPast: false };
 };
+
 
 export const TaskCard = ({ task, setDraggedTask, onEdit, userId, doneColumnId }) => {
   const [displayTime, setDisplayTime] = useState(task.timeTracked || 0);
@@ -68,10 +69,7 @@ export const TaskCard = ({ task, setDraggedTask, onEdit, userId, doneColumnId })
   
   const handleMarkComplete = async (e) => {
     e.stopPropagation();
-    if (!doneColumnId) {
-        alert("The 'Done' column could not be found.");
-        return;
-    }
+    if (!doneColumnId) return;
     await firestoreService.moveTask(userId, task.id, doneColumnId, 0);
   };
 
@@ -95,7 +93,7 @@ export const TaskCard = ({ task, setDraggedTask, onEdit, userId, doneColumnId })
   }
 
   return (
-    <div draggable onDragStart={() => setDraggedTask(task)} onClick={onEdit} className="task-card bg-gray-700 rounded-lg shadow-md cursor-pointer hover:ring-2 hover:ring-indigo-500 group">
+    <div draggable onDragStart={() => setDraggedTask(task)} onClick={onEdit} className="task-card bg-white dark:bg-gray-700 rounded-lg shadow-md cursor-pointer hover:ring-2 hover:ring-indigo-500 group">
       <div className="relative">
         <img 
           src={task.coverImage || 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'} 
@@ -119,31 +117,31 @@ export const TaskCard = ({ task, setDraggedTask, onEdit, userId, doneColumnId })
                 {task.priority}
             </span>
         )}
-        <p className="font-semibold text-gray-200 mb-2">{task.title}</p>
+        <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">{task.title}</p>
         
-        <div className="flex justify-between items-center text-gray-400">
+        <div className="flex justify-between items-center text-gray-500 dark:text-gray-400">
           <div className="flex items-center flex-wrap gap-2">
             {totalItems > 0 && (
-                 <span className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-md ${isChecklistComplete ? 'bg-green-700 text-green-200' : 'bg-gray-600'}`}>
+                 <span className={`flex items-center space-x-1 text-xs px-2 py-1 rounded-md ${isChecklistComplete ? 'bg-green-600 text-green-100' : 'bg-gray-300 dark:bg-gray-600'}`}>
                     <CheckSquare size={14} />
                     <span>{completedItems}/{totalItems}</span>
                 </span>
             )}
-             <span className="text-xs font-mono bg-gray-600 px-2 py-1 rounded-md">{formatTime(displayTime)}</span>
+             <span className="text-xs font-mono bg-gray-300 dark:bg-gray-600 px-2 py-1 rounded-md">{formatTime(displayTime)}</span>
           </div>
           
           <div className="flex items-center space-x-2">
             {!isDone && (
-                <button onClick={handleMarkComplete} title="Mark as complete" className="p-1 hover:bg-green-600 rounded-full text-gray-400 hover:text-white">
+                <button onClick={handleMarkComplete} title="Mark as complete" className="p-1 hover:bg-green-600 rounded-full text-gray-500 dark:text-gray-400 hover:text-white">
                     <Check size={16} />
                 </button>
             )}
-            <button onClick={handleTimerToggle} className="p-1 hover:bg-gray-600 rounded-full">
+            <button onClick={handleTimerToggle} className="p-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full">
               {task.isTracking ? <Pause size={16} className="text-yellow-400" /> : <Play size={16} />}
             </button>
             <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={handleEdit} className="p-1 hover:bg-gray-600 rounded-full"><Pencil size={14} /></button>
-                <button onClick={handleDelete} className="p-1 hover:bg-gray-600 rounded-full"><Trash2 size={14} /></button>
+                <button onClick={handleEdit} className="p-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full"><Pencil size={14} /></button>
+                <button onClick={handleDelete} className="p-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full"><Trash2 size={14} /></button>
             </div>
           </div>
         </div>
