@@ -1,7 +1,3 @@
-
-
-
-
 import { initializeApp } from "firebase/app";
 // Import all the auth functions we need, including updateProfile
 import { 
@@ -10,20 +6,19 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut,
-  updateProfile // Add this import
+  updateProfile
 } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Your firebaseConfig object
-// Your firebaseConfig object
+// Your firebaseConfig object now reads from environment variables
 const firebaseConfig = {
-  apiKey: "AIzaSyBGFHAw9HtFGd5AU6LuMRDN3GkJIZDR7eY",
-  authDomain: "workflow-1e6ed.firebaseapp.com",
-  projectId: "workflow-1e6ed",
-  storageBucket: "workflow-1e6ed.firebasestorage.app",
-  messagingSenderId: "475146109664",
-  appId: "1:475146109664:web:20debe12f06c666ff88685",
-  measurementId: "G-BHZX95WXJJ"
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID,
+  measurementId: import.meta.env.VITE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
@@ -39,5 +34,5 @@ export {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut,
-  updateProfile // Add this export
+  updateProfile
 };
