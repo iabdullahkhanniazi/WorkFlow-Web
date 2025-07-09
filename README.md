@@ -1,127 +1,171 @@
-# TaskFlow Board - Task Management App
+TaskFlow: A Modern Task Management Application
+TaskFlow is a feature-rich, web-based task management application inspired by services like Trello, Asana, and Jira. It provides a clean, Kanban-style interface for users to manage their projects and workflows efficiently. Built with React and Firebase, it offers real-time data synchronization, multiple views, and a polished user experience with both dark and light themes.
 
-TaskFlow is a modern, web-based task management application inspired by services like Trello and Asana. It provides a clean, Kanban-style interface for users to manage their projects and workflows efficiently. Built with React and Firebase, it offers real-time data synchronization and a rich user experience.
+Live Demo
+(Link to your deployed GitHub Pages site will go here)
 
-## Features
+Features
+Secure User Authentication:
 
-- **User Authentication:** Secure user registration and login using Firebase Authentication (Email/Password).
-- **Kanban Board:** A drag-and-drop interface to move tasks between customizable columns.
-- **Task Management:** Create, edit, and delete tasks with a feature-rich modal.
-- **Rich Text Descriptions:** A WYSIWYG editor (`react-quill`) for detailed task descriptions with formatting options.
-- **Task Priority:** Assign Low, Medium, or High priority to tasks, displayed with colored badges.
-- **Due Dates & Times:** Set specific deadlines for tasks, with visual indicators for overdue items and remaining time.
-- **Time Tracking:** A built-in timer for each task to track the time spent, which is saved automatically.
-- **Real-time Database:** All changes are instantly synced across sessions using Firebase Firestore.
-- **Domain-Driven Design:** The codebase is structured with a clear separation of concerns, separating UI components from business logic and data services.
+User registration and login with Email/Password.
 
-## Tech Stack
+User profile creation with display name and photo URL.
 
-- **Frontend:** React.js, Vite
-- **Styling:** Tailwind CSS
-- **Backend & Database:** Firebase (Authentication, Firestore)
-- **Icons:** Lucide React
-- **Rich Text Editor:** React Quill
+Secure session management with Firebase Authentication.
 
-## Getting Started
+Dual-View Interface:
 
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
+Kanban Board View: A classic drag-and-drop interface to move tasks between customizable columns.
 
-### Prerequisites
+Calendar View: A full-page calendar to visualize tasks by their due dates, with priority filters and weekend highlighting.
 
-- [Node.js](https://nodejs.org/) (v20.x or higher recommended)
-- `npm` (usually comes with Node.js)
-- A Firebase account
+Advanced Task Management:
 
-### Installation
+Create, edit, and delete tasks in a comprehensive detail modal.
 
-1.  **Clone the repository:**
+Rich Text Descriptions: Use a WYSIWYG editor for detailed descriptions with formatting.
 
-    ```bash
-    git clone [https://github.com/your-username/taskflow-react-app.git](https://github.com/your-username/taskflow-react-app.git)
-    cd taskflow-react-app
-    ```
+Cover Images: Add banner images to tasks for visual context.
 
-2.  **Install NPM packages:**
+Priority Levels: Assign Low, Medium, or High priority, visualized with colored badges and icons.
 
-    ```bash
-    npm install
-    ```
+Due Dates & Times: Set specific deadlines with a datetime-local picker.
 
-3.  **Set up Firebase Environment Variables:**
+Time Tracking: A built-in timer for each task to track time spent, with start/pause functionality.
 
-    - Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project.
-    - In your project, go to **Project settings** > **General** and register a new web app.
-    - Copy the `firebaseConfig` object.
-    - In the root of your project, create a new file named `.env.local`.
-    - Add your Firebase config values to the `.env.local` file. **Important:** Vite requires environment variables to be prefixed with `VITE_`.
-      ```
-      VITE_API_KEY="AIza..."
-      VITE_AUTH_DOMAIN="your-project.firebaseapp.com"
-      VITE_PROJECT_ID="your-project-id"
-      VITE_STORAGE_BUCKET="your-project.appspot.com"
-      VITE_MESSAGING_SENDER_ID="..."
-      VITE_APP_ID="..."
-      ```
-    - Create a new file `src/firebase.js` and use the environment variables to initialize Firebase:
+Checklists: Break down tasks into smaller, manageable sub-items with a progress bar.
 
-      ```javascript
-      // src/firebase.js
-      import { initializeApp } from "firebase/app";
-      import { getAuth } from "firebase/auth";
-      import { getFirestore } from "firebase/firestore";
+Comments & Activity: Add comments to tasks to collaborate and track progress.
 
-      const firebaseConfig = {
-        apiKey: import.meta.env.VITE_API_KEY,
-        authDomain: import.meta.env.VITE_AUTH_DOMAIN,
-        projectId: import.meta.env.VITE_PROJECT_ID,
-        storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
-        messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
-        appId: import.meta.env.VITE_APP_ID,
-      };
+Interactive UI/UX:
 
-      const app = initializeApp(firebaseConfig);
-      export const auth = getAuth(app);
-      export const db = getFirestore(app);
-      ```
+Dark/Light Mode Toggle: Switch between themes for user comfort.
 
-    - **Security:** The `.env.local` file is automatically ignored by Git in a Vite project, so your keys will not be uploaded to GitHub.
+Inline Editing: Click to edit due dates and priorities directly in the task detail view.
 
-4.  **Configure Firebase Services:**
+Drag-and-Drop: Reorder both tasks within columns and the columns themselves.
 
-    - In the Firebase Console, go to **Authentication** > **Sign-in method** and enable **Email/Password**.
-    - Go to **Firestore Database**, create a database, and in the **Rules** tab, paste the following rules:
-      ```
-      rules_version = '2';
-      service cloud.firestore {
-        match /databases/{database}/documents {
-          match /artifacts/{appId}/users/{userId}/{allPaths=**} {
-            allow read, write: if request.auth != null && request.auth.uid == userId;
-          }
-        }
-      }
-      ```
+Real-time Updates: All changes are instantly synced across sessions using Firebase Firestore.
 
-5.  **Run the development server:**
-    ```bash
-    npm run dev
-    ```
-    The application will be available at `http://localhost:5173` (or another port if 5173 is busy).
+Protected Columns: The default "To Do", "In Progress", and "Done" columns are protected from deletion.
 
-## Project Structure
+Data Reset: A secure option for users to reset their board to the default state.
 
-The project follows a Domain-Driven Design approach to keep the code organized and maintainable.
+Tech Stack
+Frontend: React.js, Vite
 
-src/
-├── components/ # UI components
-│ ├── kanban/ # Components specific to the Kanban board
-│ ├── shared/ # Reusable components (e.g., Modal)
-│ └── LoginPage.jsx # The main login/signup page
-│ └── KanbanView.jsx# The main view for the Kanban board
-├── services/ # Business logic and data access
-│ ├── authService.js # Handles all authentication logic
-│ └── firestoreService.js # Handles all Firestore database interactions
-├── App.jsx # Main component, acts as a router
-├── firebase.js # Firebase configuration and initialization
-└── ...
+Styling: Tailwind CSS (with Dark Mode)
 
-This structure separates the "how" (services) from the "what" (components), making the code easier to test, debug, and scale.
+Backend & Database: Firebase (Authentication, Firestore)
+
+Icons: Lucide React
+
+Rich Text Editor: React Quill
+
+Getting Started
+Follow these instructions to get a copy of the project up and running on your local machine.
+
+Prerequisites
+Node.js (v20.x or higher recommended)
+
+npm (comes with Node.js)
+
+A Google account for Firebase
+
+1. Clone the Repository
+   git clone [https://github.com/your-username/workflow.git](https://github.com/your-username/workflow.git)
+   cd workflow
+
+2. Install Dependencies
+   npm install
+
+3. Set Up Firebase & Secure API Keys
+   This is the most important step for security. Your secret keys should never be committed to GitHub.
+
+Create a Firebase Project: Go to the Firebase Console and create a new project.
+
+Register a Web App: In your project's settings, register a new web app and copy the firebaseConfig object.
+
+Create an Environment File: In the root folder of your project, create a new file named .env.local.
+
+Add Your Keys: Paste your Firebase config values into .env.local. Vite requires that these keys be prefixed with VITE\_.
+
+# .env.local
+
+VITE_API_KEY="AIza..."
+VITE_AUTH_DOMAIN="your-project.firebaseapp.com"
+VITE_PROJECT_ID="your-project-id"
+VITE_STORAGE_BUCKET="your-project.appspot.com"
+VITE_MESSAGING_SENDER_ID="..."
+VITE_APP_ID="..."
+
+Configure firebase.js: Make sure your src/firebase.js file loads these variables. It should already be set up this way.
+
+const firebaseConfig = {
+apiKey: import.meta.env.VITE_API_KEY,
+authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+// ...etc
+};
+
+Enable Firebase Services:
+
+In the Firebase Console, go to Authentication -> Sign-in method and enable Email/Password.
+
+Go to Firestore Database, create a database, and in the Rules tab, paste the following rules and publish:
+
+rules_version = '2';
+service cloud.firestore {
+match /databases/{database}/documents {
+match /users/{userId}/{allPaths=\*\*} {
+allow read, write: if request.auth != null && request.auth.uid == userId;
+}
+}
+}
+
+4. Run the App Locally
+   npm run dev
+
+Deployment to GitHub Pages
+Install gh-pages:
+
+npm install gh-pages --save-dev
+
+Configure package.json: Add a "homepage" property and the "predeploy" and "deploy" scripts.
+
+{
+"name": "workflow",
+"homepage": "[https://iabdullahkhanniazi.github.io/workflow](https://iabdullahkhanniazi.github.io/workflow)",
+"private": true,
+"scripts": {
+"dev": "vite",
+"build": "vite build",
+"predeploy": "npm run build",
+"deploy": "gh-pages -d dist",
+// ...
+},
+// ...
+}
+
+Configure vite.config.js: Add the base property.
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+base: '/workflow/', // Your repository name
+plugins: [react()],
+})
+
+Deploy:
+
+npm run deploy
+
+Configure GitHub Settings:
+
+In your GitHub repository settings, go to Pages.
+
+Set the Source to Deploy from a branch.
+
+Set the Branch to gh-pages with the / (root) folder.
+
+Save and wait a few minutes for the site to go live.
