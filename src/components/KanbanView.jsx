@@ -4,7 +4,7 @@ import { Header } from './kanban/Header';
 import { Board } from './kanban/Board';
 import { CalendarView } from './kanban/CalendarView';
 
-export const KanbanView = ({ user }) => {
+export const KanbanView = ({ user, theme, setTheme }) => {
   const [columns, setColumns] = useState([]);
   const [tasks, setTasks] = useState({});
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,6 @@ export const KanbanView = ({ user }) => {
     };
   }, [user.uid]);
 
-  // Memoize the filtered tasks to avoid re-calculating on every render
   const filteredTasks = useMemo(() => {
     if (!searchTerm) {
       return tasks;
@@ -53,7 +52,7 @@ export const KanbanView = ({ user }) => {
 
   if (loading) {
     return (
-      <div className="bg-gray-900 text-white h-screen flex items-center justify-center">
+      <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white h-screen flex items-center justify-center">
         <p>Loading Board...</p>
       </div>
     );
@@ -63,11 +62,13 @@ export const KanbanView = ({ user }) => {
   const doneColumn = columns.find(col => col.title === 'Done');
 
   return (
-    <div className="bg-gray-900 text-white h-screen flex flex-col font-sans">
+    <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white h-screen flex flex-col font-sans">
       <Header 
         user={user} 
         currentView={currentView}
         setCurrentView={setCurrentView}
+        theme={theme}
+        setTheme={setTheme}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
       />
@@ -75,7 +76,7 @@ export const KanbanView = ({ user }) => {
         <Board 
             columns={columns} 
             setColumns={setColumns}
-            tasks={filteredTasks} // Use the filtered tasks for the board
+            tasks={filteredTasks}
             userId={user.uid} 
             doneColumnId={doneColumn?.id} 
         />
