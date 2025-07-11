@@ -1,9 +1,11 @@
-import React from 'react';
-import { LogOut, LayoutGrid, Calendar, RefreshCw, Search, Sun, Moon } from 'lucide-react';
+import React, { useState } from 'react';
+import { LogOut, LayoutGrid, Calendar, RefreshCw, Search, Sun, Moon, Plus } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { firestoreService } from '../../services/firestoreService';
+import { ProfileModal } from '../shared/ProfileModal';
 
 export const Header = ({ user, currentView, setCurrentView, theme, setTheme, searchTerm, setSearchTerm }) => {
+  const [isProfileModalOpen, setProfileModalOpen] = useState(false);
 
   const viewButtonClasses = (viewName) => 
     `p-2 rounded-md flex items-center space-x-2 text-sm transition-colors ${
@@ -20,36 +22,46 @@ export const Header = ({ user, currentView, setCurrentView, theme, setTheme, sea
   };
 
   return (
-    <header className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-      <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold">TaskFlow</h1>
-          <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-              <button onClick={() => setCurrentView('board')} className={viewButtonClasses('board')}><LayoutGrid size={16} /><span>Board</span></button>
-              <button onClick={() => setCurrentView('calendar')} className={viewButtonClasses('calendar')}><Calendar size={16} /><span>Calendar</span></button>
-          </div>
-          <div className="relative">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              type="text"
-              placeholder="Search tasks..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-      </div>
-      <div className="flex items-center space-x-4">
-        <span className="text-sm text-gray-500 dark:text-gray-300 hidden md:block">{user.email}</span>
-        <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" title="Toggle Theme">
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
-        <button onClick={handleResetData} className="p-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white" title="Reset All Data">
-          <RefreshCw size={20} />
-        </button>
-        <button onClick={authService.logout} className="p-2 rounded-lg bg-red-600 hover:bg-red-700 text-white" title="Logout">
-          <LogOut size={20} />
-        </button>
-      </div>
-    </header>
+    <>
+      <header className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold">TaskFlow</h1>
+            <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                <button onClick={() => setCurrentView('board')} className={viewButtonClasses('board')}><LayoutGrid size={16} /><span>Board</span></button>
+                <button onClick={() => setCurrentView('calendar')} className={viewButtonClasses('calendar')}><Calendar size={16} /><span>Calendar</span></button>
+            </div>
+            <div className="relative">
+              <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input 
+                type="text"
+                placeholder="Search tasks..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+        </div>
+        <div className="flex items-center space-x-4">
+          <span className="text-sm text-gray-500 dark:text-gray-300 hidden md:block">{user.email}</span>
+          <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" title="Toggle Theme">
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+          <button onClick={handleResetData} className="p-2 rounded-lg bg-yellow-500 hover:bg-yellow-600 text-white" title="Reset All Data">
+            <RefreshCw size={20} />
+          </button>
+           <button onClick={() => setProfileModalOpen(true)} className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center hover:ring-2 hover:ring-indigo-500">
+            {user.photoURL ? (
+                <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full rounded-full object-cover" />
+            ) : (
+                <span className="font-bold text-lg">{user.displayName ? user.displayName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}</span>
+            )}
+          </button>
+          <button onClick={authService.logout} className="p-2 rounded-lg bg-red-600 hover:bg-red-700 text-white" title="Logout">
+            <LogOut size={20} />
+          </button>
+        </div>
+      </header>
+      <ProfileModal user={user} isOpen={isProfileModalOpen} onClose={() => setProfileModalOpen(false)} />
+    </>
   );
 };
